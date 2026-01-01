@@ -1,5 +1,8 @@
 
 # 整体
+
+**代码**: https://github.com/jihe520/learn-agent
+
 一个 Agent 系统抽象出这几个最核心的类：Agent(代理) , Memory(记忆) , Tool（工具） , LLM（模型） 
 
 当然还有Observation(观测)，Database(数据库)等辅助类，这些不影响核心功能，在此不添加过多理解门槛。
@@ -270,3 +273,7 @@ M --> D
 ```
 
 接下来有了这些前备知识，你可以查看代码中的详细的注解，理解每一步在做什么。
+
+---
+
+**代码**: https://github.com/jihe520/learn-agent
