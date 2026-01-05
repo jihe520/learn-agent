@@ -29,12 +29,14 @@ def function_to_tool_schema(fn: Callable[..., Any]) -> dict:
     for name, p in sig.parameters.items():
         if name == "self":
             continue
-        ann = p.annotation if p.annotation is not inspect._empty else str
+        ann = (
+            p.annotation if p.annotation is not inspect._empty else str
+        )  # ann 是参数注解
         # 处理 Optional[...] / Union[...]：这里只做最小化映射
         json_type = _py_type_to_json_type(
             ann if ann in (int, float, bool, str) else str
         )
-        props[name] = {"type": json_type}
+        props[name] = {"type": json_type}  # 参数属性
 
         if p.default is inspect._empty:
             # 没有默认值的参数视为必填

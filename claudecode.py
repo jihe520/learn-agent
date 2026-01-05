@@ -1,4 +1,5 @@
 # https://github.com/shareAI-lab/learn-claude-code/blob/main/v0_bash_agent.py
+from learn_agent.tool.todo_tool import Todo
 import sys
 from icecream import ic
 from learn_agent.agent import Agent
@@ -21,12 +22,37 @@ Rules:
 - Make minimal changes. Don't over-engineer.
 - After finishing, summarize what changed.
 
+- Use Todo to track multi-step tasks
+- Mark tasks in_progress before starting, completed when done
+- Prefer tools over prose. Act, don't just explain.
+- After finishing, summarize what changed
+
 When to use subagent:
 - Task requires reading many files (isolate the exploration)
 - Task is independent and self-contained
 - You want to avoid polluting current conversation with intermediate details
 
 The subagent runs in isolation and returns only its final summary."""
+
+# TODO: todo list
+# =============================================================================
+# System Reminders - Soft prompts to encourage todo usage
+# =============================================================================
+
+# Shown at the start of conversation
+INITIAL_REMINDER = "<reminder>Use TodoWrite for multi-step tasks.</reminder>"
+
+# Shown if model hasn't updated todos in a while
+NAG_REMINDER = (
+    "<reminder>10+ turns without todo update. Please update todos.</reminder>"
+)
+
+
+# TODO : repl
+# =============================================================================
+# Main REPL
+# =============================================================================
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
@@ -38,7 +64,7 @@ if __name__ == "__main__":
             name="test",
             system_prompt=SYSTEM,
             llm=DeepSeek(model="deepseek-chat"),
-            tools=[FileTool()],
+            tools=[FileTool(), Todo()],
             memory=Memory(),
         )
         res = agent.run("你好")

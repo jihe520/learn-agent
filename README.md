@@ -41,3 +41,9 @@ uv run main.py
 1. 以一个最小 Agent 实现为例子
 2. 一个 Python 文件，大约300 行代码
 
+
+
+References:
+[HelloAgents](https://github.com/jjyaoao/HelloAgents)
+[learn-claude-code](https://github.com/shareAI-lab/learn-claude-code)
+[Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview)
