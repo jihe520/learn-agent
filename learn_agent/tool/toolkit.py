@@ -42,15 +42,12 @@ def function_to_tool_schema(fn: Callable[..., Any]) -> dict:
 
     doc = inspect.getdoc(fn) or ""  # 函数的 docstring
     fn_name = getattr(fn, "__name__", fn.__class__.__name__)  # 函数名
-    desc = (
-        doc.strip().split("\n\n")[0] if doc.strip() else f"Call {fn_name}"
-    )  # 简单取 docstring 第一段作为描述
 
     return {
         "type": "function",
         "function": {
             "name": fn_name,
-            "description": desc,
+            "description": doc,
             "parameters": {
                 "type": "object",
                 "properties": props,
