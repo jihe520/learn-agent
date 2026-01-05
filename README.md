@@ -43,7 +43,7 @@ uv run main.py
 
 
 
-References:
+References + Learning Resources:
 [HelloAgents](https://github.com/jjyaoao/HelloAgents)
 [learn-claude-code](https://github.com/shareAI-lab/learn-claude-code)
 [Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview)

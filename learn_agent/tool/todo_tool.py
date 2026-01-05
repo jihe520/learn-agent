@@ -1,7 +1,14 @@
 from learn_agent.tool.toolkit import Toolkit
+from pydantic import BaseModel
 
 
-class Todo(Toolkit):
+class Todo(BaseModel):
+    content: str
+    status: str
+    activeForm: str
+
+
+class TodoTool(Toolkit):
     def __init__(self):
         super().__init__(
             name="Todo",
@@ -9,7 +16,7 @@ class Todo(Toolkit):
         )
         self.todos = []
 
-    def update(self, items: list) -> str:
+    def update_todos(self, items: list[Todo]) -> str:
         """
         Validate and update the todo list.
 
@@ -22,6 +29,11 @@ class Todo(Toolkit):
         - Only ONE item can be in_progress at a time
         - Maximum 20 items allowed
 
+        Args:
+            items (list[Todo]): New todo items
+             - content (str): Task description
+             - status (str): One of "pending", "in_progress", "completed"
+             - activeForm (str): Current action being performed (if any)
           Returns:
             Rendered text view of the todo list
         """
@@ -29,9 +41,9 @@ class Todo(Toolkit):
         in_progress_count = 0
         for i, item in enumerate(items):
             # Extract and validate fields
-            content = str(item.get("content", "")).strip()
-            status = str(item.get("status", "pending")).lower()
-            active_form = str(item.get("activeForm", "")).strip()
+            content = str(item.content).strip()
+            status = str(item.status).lower()
+            active_form = str(item.activeForm).strip()
 
             # Validation checks
             if not content:

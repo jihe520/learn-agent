@@ -11,7 +11,7 @@ class FileTool(Toolkit):
         self.work_dir = os.path.abspath(work_dir)
         super().__init__(
             name="FileTool",
-            tools=[self.bash],
+            tools=[self.bash, self.read_file, self.write_file, self.edit_file],
         )
 
     def _safe_path(self, p: str) -> Path:
@@ -26,7 +26,6 @@ class FileTool(Toolkit):
         execute shell command. common patterns:
         - Read: cat/head/tail,grep/find/rg/ls,wc -l
         - Write: echo,>,>>,tee
-        - Subagent: python claudecode.py 'task description'(spawn isolated agent ,returns summary)
         """
         import subprocess
 
