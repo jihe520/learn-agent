@@ -5,9 +5,7 @@ import os
 
 # https://github.com/jjyaoao/HelloAgents/blob/main/hello_agents/tools/builtin/terminal_tool.py
 class FileTool(Toolkit):
-    # 允许的命令白名单
-
-    def __init__(self, work_dir: str = "."):
+    def __init__(self, work_dir: Path = Path.cwd()):
         self.work_dir = os.path.abspath(work_dir)
         super().__init__(
             name="FileTool",

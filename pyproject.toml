@@ -7,12 +7,16 @@ requires-python = ">=3.13"
 dependencies = [
     "icecream>=2.1.8",
     "openai>=1.0.0",
+    "pytest>=9.0.2",
     "python-dotenv>=1.2.1",
     "socksio>=1.0.0",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
 
 [dependency-groups]
 dev = [
