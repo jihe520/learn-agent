@@ -177,6 +177,3 @@ LLM 具有完整的上下文记忆能力，每次发送完整列表简化了工�
 | in_progress 限制 | 1个 | 1个 |
 | 最大数量 | 20 | 无硬性限制 |
 
----
-
-**代码**: https://github.com/jihe520/learn-agent

@@ -183,6 +183,3 @@ file_tool.edit_file("test.txt", "Hello", "Hi")
 3. **危险命令白名单** - FileTool 内置了基础检测，生产环境可考虑更严格的策略
 4. **输出长度限制** - 50KB 限制防止上下文溢出
 
----
-
-**代码**: https://github.com/jihe520/learn-agent
