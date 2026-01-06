@@ -12,7 +12,7 @@ class TodoTool(Toolkit):
     def __init__(self):
         super().__init__(
             name="Todo",
-            tools=[],
+            tools=[self.update_todos],
         )
         self.todos = []
 

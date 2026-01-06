@@ -6,6 +6,10 @@
 一个 Agent 系统抽象出这几个最核心的类：Agent(代理) , Memory(记忆) , Tool（工具） , LLM（模型） 
 
 当然还有Observation(观测)，Database(数据库)等辅助类，这些不影响核心功能，在此不添加过多理解门槛。
+
+
+一切皆 Tool ，记住这句话，后面所有的实现都是 基于 Tool 展开的。
+
 ```mermaid
 classDiagram
     class LLM {

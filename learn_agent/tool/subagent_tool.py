@@ -84,3 +84,9 @@ class SubAgentTool(Toolkit):
             f"[subagent:{agent_type}] completed task: {description} in {duration:.2f}s"
         )
         return res
+
+    def get_agent_descriptions(self) -> str:
+        return "\n".join(
+            f"- {name}: {config['description']}"
+            for name, config in self.agent_type.items()
+        )
