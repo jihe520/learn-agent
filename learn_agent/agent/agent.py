@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, Generator
 from learn_agent.llm import LLM
 from learn_agent.memory import Memory
 from learn_agent.tool.toolkit import Toolkit
@@ -107,3 +107,113 @@ class Agent:
                 )
 
         return "ERROR: reached maximum tool rounds without a final answer."
+
+    def run_stream(
+        self, user_text: str
+    ) -> Generator[dict, None, None]:
+        """
+        流式运行方法
+
+        Yields:
+            dict: 事件字典
+                - {"type": "assistant", "content": "xxx"}  # 助手回复片段
+                - {"type": "tool_call", "name": "xxx", "args": {...}}  # 工具调用开始
+                - {"type": "tool_result", "name": "xxx", "result": {...}}  # 工具执行结果
+                - {"type": "done", "final": "xxx"}  # 完成
+                - {"type": "error", "message": "xxx"}  # 错误
+        """
+        # 把用户输入加入上下文
+        self.memory.add_message(role="user", content=user_text)
+        yield {"type": "user_message", "content": user_text}
+
+        tool_schema = self._all_tool_schemas()
+
+        for _round in range(self.max_tool_rounds):
+            messages = self.memory.get_context()
+
+            # 使用流式 LLM 调用
+            assistant_content_buffer = ""
+            tool_calls_info: list[dict] = []
+
+            for event in self.llm.chat_stream(messages=messages, tools=tool_schema):
+                event_type = event.get("type")
+
+                if event_type == "content":
+                    content_chunk = event["content"]
+                    assistant_content_buffer += content_chunk
+                    yield {"type": "assistant", "content": content_chunk}
+
+                elif event_type == "tool_calls":
+                    tool_calls_info = event["tool_calls"]
+
+                elif event_type == "done":
+                    break
+
+            # 处理工具调用（如果有）
+            if tool_calls_info:
+                # 先把 assistant 消息（包含 tool_calls）添加到 memory
+                self.memory.add_message(
+                    role="assistant",
+                    content=assistant_content_buffer or None,
+                    tool_calls=[
+                        {
+                            "id": tc["id"],
+                            "type": tc.get("type", "function"),
+                            "function": {
+                                "name": tc["function"]["name"],
+                                "arguments": tc["function"]["arguments"],
+                            },
+                        }
+                        for tc in tool_calls_info
+                    ],
+                )
+
+                # 发送工具调用事件
+                for tc in tool_calls_info:
+                    fn_name = tc["function"]["name"]
+                    raw_args = tc["function"]["arguments"]
+
+                    try:
+                        args = json.loads(raw_args) if isinstance(raw_args, str) else raw_args
+                    except Exception:
+                        args = {}
+
+                    # 发送工具调用开始事件
+                    yield {"type": "tool_call", "name": fn_name, "args": args}
+
+                    # 执行工具
+                    try:
+                        result = self._dispatch_tool(fn_name, args)
+                        tool_content = json.dumps(
+                            {"ok": True, "result": result}, ensure_ascii=False
+                        )
+                        yield {"type": "tool_result", "name": fn_name, "result": result}
+                    except Exception as e:
+                        tool_content = json.dumps(
+                            {
+                                "ok": False,
+                                "error": {"code": "TOOL_EXEC_ERROR", "message": str(e)},
+                            },
+                            ensure_ascii=False,
+                        )
+                        yield {"type": "tool_error", "name": fn_name, "error": str(e)}
+
+                    # 添加到上下文
+                    self.memory.add_message(
+                        role="tool",
+                        content=tool_content,
+                        tool_call_id=tc["id"],
+                    )
+
+                # 继续下一轮（获取最终回答）
+                continue
+
+            # 没有工具调用，任务完成
+            self.memory.add_message(
+                role="assistant", content=assistant_content_buffer
+            )
+            yield {"type": "done", "final": assistant_content_buffer}
+            return
+
+        # 达到最大轮次
+        yield {"type": "error", "message": "ERROR: reached maximum tool rounds without a final answer."}
