@@ -8,7 +8,7 @@ def _parse_param_descriptions(doc: str | None) -> dict[str, str]:
         return {}
 
     result = {}
-    lines = doc.split('\n')
+    lines = doc.split("\n")
     in_args = False
     current_param = None
     current_desc_lines: list[str] = []
@@ -17,14 +17,16 @@ def _parse_param_descriptions(doc: str | None) -> dict[str, str]:
         stripped = line.strip()
 
         # 检测 Args 区域开始
-        if stripped.lower().startswith('args:'):
+        if stripped.lower().startswith("args:"):
             in_args = True
             continue
 
         # 检测其他区域开始，结束 Args 解析
-        if stripped.lower().startswith(('returns:', 'examples:', 'notes:', 'raises:', 'attributes:')):
+        if stripped.lower().startswith(
+            ("returns:", "examples:", "notes:", "raises:", "attributes:")
+        ):
             if current_param:
-                result[current_param] = ' '.join(current_desc_lines)
+                result[current_param] = " ".join(current_desc_lines)
             in_args = False
             current_param = None
             current_desc_lines = []
@@ -32,19 +34,21 @@ def _parse_param_descriptions(doc: str | None) -> dict[str, str]:
 
         # 在 Args 区域内
         if in_args:
-            content = stripped.lstrip('-').strip()
-            is_param_line = ':' in content and not content.split(':')[0].startswith('http')
+            content = stripped.lstrip("-").strip()
+            is_param_line = ":" in content and not content.split(":")[0].startswith(
+                "http"
+            )
 
             if is_param_line:
                 if current_param:
-                    result[current_param] = ' '.join(current_desc_lines)
+                    result[current_param] = " ".join(current_desc_lines)
 
-                param_part = content.split(':')[0].strip()
-                param_desc = content.split(':', 1)[1].strip()
+                param_part = content.split(":")[0].strip()
+                param_desc = content.split(":", 1)[1].strip()
 
                 # 处理 "param (type)" 格式，提取参数名
-                if '(' in param_part:
-                    param_name = param_part.split('(')[0].strip()
+                if "(" in param_part:
+                    param_name = param_part.split("(")[0].strip()
                 else:
                     param_name = param_part
 
@@ -54,7 +58,7 @@ def _parse_param_descriptions(doc: str | None) -> dict[str, str]:
                 current_desc_lines.append(stripped)
 
     if current_param:
-        result[current_param] = ' '.join(current_desc_lines)
+        result[current_param] = " ".join(current_desc_lines)
 
     return result
 
@@ -88,16 +92,11 @@ def function_to_tool_schema(fn: Callable[..., Any]) -> dict:
     for name, p in sig.parameters.items():
         if name == "self":
             continue
-        ann = (
-            p.annotation if p.annotation is not inspect._empty else str
-        )
+        ann = p.annotation if p.annotation is not inspect._empty else str
         json_type = _py_type_to_json_type(
             ann if ann in (int, float, bool, str) else str
         )
-        props[name] = {
-            "type": json_type,
-            "description": param_descs.get(name, "")
-        }
+        props[name] = {"type": json_type, "description": param_descs.get(name, "")}
 
         if p.default is inspect._empty:
             required.append(name)
@@ -126,13 +125,47 @@ class Toolkit:
         self,
         name: str | None = None,
         tools: list[Callable] | None = None,
+        **kwargs,
     ):
         self.name = name or self.__class__.__name__
         self._tools: dict[str, Callable] = {}
+        include_tools = kwargs.get("include_tools")
+        include_set = set(include_tools) if include_tools else None
         if tools:
             for fn in tools:
                 fn_name = getattr(fn, "__name__", fn.__class__.__name__)
-                self._tools[fn_name] = fn
+                if include_set is None or fn_name in include_set:
+                    self._tools[fn_name] = fn
+
+    @staticmethod
+    def _normalize_tool_spec(tool_spec) -> tuple[set[str], set[str]]:
+        if tool_spec is None or tool_spec == "*":
+            return {"*"}, set()
+        if isinstance(tool_spec, dict):
+            include = set(tool_spec.get("include") or [])
+            exclude = set(tool_spec.get("exclude") or [])
+            return include, exclude
+        if isinstance(tool_spec, (list, tuple, set)):
+            return set(tool_spec), set()
+        if isinstance(tool_spec, str):
+            return {tool_spec}, set()
+        return {"*"}, set()
+
+    def select_tools(self, tool_spec=None) -> "Toolkit":
+        include, exclude = self._normalize_tool_spec(tool_spec)
+        if include and "*" in include and not exclude:
+            return self
+        if include and "*" not in include:
+            selected = {name: fn for name, fn in self._tools.items() if name in include}
+        else:
+            selected = dict(self._tools)
+        if exclude:
+            selected = {
+                name: fn for name, fn in selected.items() if name not in exclude
+            }
+        if selected is self._tools:
+            return self
+        return Toolkit(name=self.name, tools=list(selected.values()))
 
     def list_tools_schemas(self) -> list[dict]:
         # 把工具函数统一转换为 OpenAI tools schema

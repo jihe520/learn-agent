@@ -42,10 +42,10 @@ class LLM:
         if tools:
             kwargs["tools"] = tools
             # kwargs["tool_choice"] = "auto"  # 一般默认就是 auto，可显式打开
-
+        print("LLM chat with params:\n", kwargs)
         # 发起一次非流式对话请求，非流式更适合学习和调试
         response = self.client.chat.completions.create(**kwargs)
-        ic(response)
+        print("LLM response:\n", response)
         msg = response.choices[0].message
         return msg
 

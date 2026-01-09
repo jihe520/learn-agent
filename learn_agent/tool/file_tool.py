@@ -1,21 +1,21 @@
 from pathlib import Path
 from .toolkit import Toolkit
-import os
 
 
 # https://github.com/jjyaoao/HelloAgents/blob/main/hello_agents/tools/builtin/terminal_tool.py
 class FileTool(Toolkit):
-    def __init__(self, work_dir: Path = Path.cwd()):
-        self.work_dir = os.path.abspath(work_dir)
+    def __init__(self, work_dir: Path = Path.cwd(), **kwargs):
+        self.work_dir = Path(work_dir).expanduser().resolve()
         super().__init__(
             name="FileTool",
             tools=[self.bash, self.read_file, self.write_file, self.edit_file],
+            **kwargs,
         )
 
     def _safe_path(self, p: str) -> Path:
         # 防止路径穿越攻击
-        path = (Path(self.work_dir) / p).resolve()
-        if not path.is_relative_to(Path(self.work_dir).resolve()):
+        path = (self.work_dir / p).resolve()
+        if not path.is_relative_to(self.work_dir):
             raise ValueError("Unsafe path detected.")
         return path
 

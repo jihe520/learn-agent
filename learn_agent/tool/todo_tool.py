@@ -9,10 +9,11 @@ class Todo(BaseModel):
 
 
 class TodoTool(Toolkit):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__(
             name="Todo",
             tools=[self.update_todos],
+            **kwargs,
         )
         self.todos = []
 

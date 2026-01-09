@@ -70,3 +70,8 @@ Agent (orchestrator)
 
 - Copy `.env.example` to `.env` and set `DEEPSEEK_API_KEY`
 - Python path configured via `pyproject.toml` with `pythonpath = ["."]`
+
+
+## Test
+- uv run pytest
+- can use @pytest.fixture

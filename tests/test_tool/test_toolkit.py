@@ -1,8 +1,18 @@
 """测试 toolkit 参数描述解析功能"""
 
 import pytest
-from learn_agent.tool.toolkit import function_to_tool_schema, _parse_param_descriptions
+from learn_agent.tool.toolkit import (
+    Toolkit,
+    function_to_tool_schema,
+    _parse_param_descriptions,
+)
 from learn_agent.tool.file_tool import FileTool
+from pathlib import Path
+
+
+@pytest.fixture
+def file_tool():
+    return FileTool(work_dir=Path.cwd() / "work_dir")
 
 
 def test_parse_param_descriptions():
@@ -64,3 +74,21 @@ def test_parse_multiline_descriptions():
         "path": "保存的文件路径 必须是绝对路径",
         "overwrite": "是否覆盖已存在的文件",
     }
+
+
+def test_include_tools():
+    file_tool = FileTool(include_tools=["bash", "read_file"])
+    assert file_tool.has("bash") is True
+    assert file_tool.has("read_file") is True
+    assert file_tool.has("write_file") is False
+    assert file_tool.has("edit_file") is False
+
+    def foo():
+        return "foo"
+
+    def bar():
+        return "bar"
+
+    toolkit = Toolkit(tools=[foo, bar], include_tools=["bar"])
+    assert toolkit.has("bar") is True
+    assert toolkit.has("foo") is False

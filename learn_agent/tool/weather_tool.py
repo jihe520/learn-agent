@@ -2,10 +2,11 @@ from .toolkit import Toolkit
 
 
 class WeatherTool(Toolkit):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__(
             name="WeatherTool",
             tools=[self.get_temperature, self.get_humidity],
+            **kwargs,
         )
 
     def get_temperature(self, num: int | None = 2) -> list[dict[str, float]]:

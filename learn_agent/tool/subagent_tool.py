@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from learn_agent.memory import Memory
 from learn_agent.llm import DeepSeek
 import time
+from pathlib import Path
 
 
 # TODO: use pydantic model
@@ -13,12 +14,19 @@ class task(BaseModel):
 
 
 class SubAgentTool(Toolkit):
-    def __init__(self, agent_type: dict, work_dir: str = "."):
+    def __init__(
+        self,
+        agent_type: dict,
+        work_dir: Path = Path.cwd(),
+        **kwargs,
+    ):
         self.agent_type = agent_type
         self.work_dir = work_dir
+
         super().__init__(
             name="SubAgentTool",
             tools=[self.delegate_task],
+            **kwargs,
         )
 
         """
@@ -63,10 +71,9 @@ class SubAgentTool(Toolkit):
         start_time = time.time()
 
         config = self.agent_type[agent_type]
-        # TODO: filter tools
         from learn_agent.agent.claude_code_agent import ClaudeCodeAgent
 
-        sub_system_prompt = f"""you are a {agent_type} subagent. at {self.work_dir}
+        sub_system_prompt = f"""you are a {agent_type} subagent. at {self.work_dir.absolute()}
             {config["system_prompt"]}
         """
         sub_agent = ClaudeCodeAgent(
@@ -74,7 +81,7 @@ class SubAgentTool(Toolkit):
             name=f"subagent_{agent_type}",
             system_prompt=sub_system_prompt,
             llm=DeepSeek(model="deepseek-chat"),
-            tools=[],
+            tools=config.get("tools"),
             memory=Memory(),
         )
         res = sub_agent.run(prompt)

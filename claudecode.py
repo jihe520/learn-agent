@@ -13,28 +13,26 @@ from pathlib import Path
 import os
 
 
-# TODO: agent tool include and exclude
-
 AGENT_TYPES = {
     # Explore: Read-only agent for searching and analyzing
     # Cannot modify files - safe for broad exploration
     "explore": {
         "description": "Read-only agent for exploring code, finding files, searching",
-        "tools": ["bash", "read_file"],  # No write access
+        "tools": FileTool(include_tools=["bash", "read_file"]),  # No write access
         "system_prompt": "You are an exploration agent. Search and analyze, but never modify files. Return a concise summary.",
     },
     # Code: Full-powered agent for implementation
     # Has all tools - use for actual coding work
     "code": {
         "description": "Full agent for implementing features and fixing bugs",
-        "tools": "*",  # All tools
+        "tools": [FileTool()],  # All tools
         "system_prompt": "You are a coding agent. Implement the requested changes efficiently.",
     },
     # Plan: Analysis agent for design work
     # Read-only, focused on producing plans and strategies
     "plan": {
         "description": "Planning agent for designing implementation strategies",
-        "tools": ["bash", "read_file"],  # Read-only
+        "tools": [FileTool(include_tools=["bash", "read_file"])],  # Read-only
         "system_prompt": "You are a planning agent. Analyze the codebase and output a numbered implementation plan. Do NOT make changes.",
     },
 }
@@ -42,9 +40,16 @@ AGENT_TYPES = {
 if __name__ == "__main__":
     print("Claude Code Agent")
     print("Type 'exit' to quit.")
-    subagent_tool = SubAgentTool(AGENT_TYPES)
+    work_dir = Path.cwd() / "work_dir"
+    file_tool = FileTool(work_dir=work_dir)
+    todo_tool = TodoTool()
     skill_tool = SkillTool(Path("skills"))
-    SYSTEM = f"""You are a coding agent at {os.getcwd()}.
+    subagent_tool = SubAgentTool(
+        AGENT_TYPES,
+        available_toolkits=[file_tool, todo_tool, skill_tool],
+        work_dir=work_dir,
+    )
+    SYSTEM = f"""You are a coding agent at {work_dir.absolute()}.
 
 Loop: think briefly -> use tools -> report results.
 
@@ -92,8 +97,8 @@ The subagent runs in isolation and returns only its final summary."""
                 system_prompt=SYSTEM,
                 llm=DeepSeek(model="deepseek-chat"),
                 tools=[
-                    FileTool(),
-                    TodoTool(),
+                    file_tool,
+                    todo_tool,
                     subagent_tool,
                     skill_tool,
                 ],
