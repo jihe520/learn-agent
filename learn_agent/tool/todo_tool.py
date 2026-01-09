@@ -34,7 +34,7 @@ class TodoTool(Toolkit):
              - content (str): Task description
              - status (str): One of "pending", "in_progress", "completed"
              - activeForm (str): Current action being performed (if any)
-          Returns:
+        Returns:
             Rendered text view of the todo list
         """
         validated = []

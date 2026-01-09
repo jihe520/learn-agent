@@ -24,6 +24,9 @@ class FileTool(Toolkit):
         execute shell command. common patterns:
         - Read: cat/head/tail,grep/find/rg/ls,wc -l
         - Write: echo,>,>>,tee
+
+        Args:
+            command (str): shell command to execute
         """
         import subprocess
 
@@ -49,9 +52,12 @@ class FileTool(Toolkit):
     def read_file(self, path: str, limit: int | None = None) -> str:
         """
         Read file contents with optional line limit.
-
         For large files, use limit to read just the first N lines.
         Output truncated to 50KB to prevent context overflow.
+
+        Args:
+            path (str): Path to the file to read.
+            limit (int | None): Optional
         """
         try:
             text = self._safe_path(path).read_text()
@@ -69,9 +75,13 @@ class FileTool(Toolkit):
     def write_file(self, path: str, content: str) -> str:
         """
         Write content to file, creating parent directories if needed.
-
         This is for complete file creation/overwrite.
         For partial edits, use edit_file instead.
+
+        Args:
+            path (str): Path to the file to write.
+            content (str): Content to write to the file.
+
         """
         try:
             fp = self._safe_path(path)
@@ -85,9 +95,13 @@ class FileTool(Toolkit):
     def edit_file(self, path: str, old_text: str, new_text: str) -> str:
         """
         Replace exact text in a file (surgical edit).
-
         Uses exact string matching - the old_text must appear verbatim.
         Only replaces the first occurrence to prevent accidental mass changes.
+
+        Args:
+            path (str): Path to the file to edit.
+            old_text (str): Exact text to find.
+            new_text (str): Text to replace with.
         """
         try:
             fp = self._safe_path(path)

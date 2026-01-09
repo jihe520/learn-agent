@@ -2,6 +2,63 @@ from typing import Any, Callable
 import inspect
 
 
+def _parse_param_descriptions(doc: str | None) -> dict[str, str]:
+    """从 Google 风格 docstring 解析参数描述，支持多行描述和类型注解"""
+    if not doc:
+        return {}
+
+    result = {}
+    lines = doc.split('\n')
+    in_args = False
+    current_param = None
+    current_desc_lines: list[str] = []
+
+    for line in lines:
+        stripped = line.strip()
+
+        # 检测 Args 区域开始
+        if stripped.lower().startswith('args:'):
+            in_args = True
+            continue
+
+        # 检测其他区域开始，结束 Args 解析
+        if stripped.lower().startswith(('returns:', 'examples:', 'notes:', 'raises:', 'attributes:')):
+            if current_param:
+                result[current_param] = ' '.join(current_desc_lines)
+            in_args = False
+            current_param = None
+            current_desc_lines = []
+            continue
+
+        # 在 Args 区域内
+        if in_args:
+            content = stripped.lstrip('-').strip()
+            is_param_line = ':' in content and not content.split(':')[0].startswith('http')
+
+            if is_param_line:
+                if current_param:
+                    result[current_param] = ' '.join(current_desc_lines)
+
+                param_part = content.split(':')[0].strip()
+                param_desc = content.split(':', 1)[1].strip()
+
+                # 处理 "param (type)" 格式，提取参数名
+                if '(' in param_part:
+                    param_name = param_part.split('(')[0].strip()
+                else:
+                    param_name = param_part
+
+                current_param = param_name
+                current_desc_lines = [param_desc] if param_desc else []
+            elif current_param and stripped:
+                current_desc_lines.append(stripped)
+
+    if current_param:
+        result[current_param] = ' '.join(current_desc_lines)
+
+    return result
+
+
 def _py_type_to_json_type(t: Any) -> str:
     # 极简映射：够用即可（你后面可以扩展）对应 OpenAI tools schema 里的数据类型
     if t in (int,):
@@ -19,9 +76,11 @@ def function_to_tool_schema(fn: Callable[..., Any]) -> dict:
     """
     把一个 Python 函数转成 OpenAI tools function schema（最小版）
     - 参数从签名拿
-    - description 用 docstring 第一段
+    - description 用 docstring
     """
-    # 从函数签名里拿到参数名、默认值、注解
+    doc = inspect.getdoc(fn) or ""
+    param_descs = _parse_param_descriptions(doc)
+
     sig = inspect.signature(fn)
     props: dict[str, Any] = {}
     required: list[str] = []
@@ -31,19 +90,19 @@ def function_to_tool_schema(fn: Callable[..., Any]) -> dict:
             continue
         ann = (
             p.annotation if p.annotation is not inspect._empty else str
-        )  # ann 是参数注解
-        # 处理 Optional[...] / Union[...]：这里只做最小化映射
+        )
         json_type = _py_type_to_json_type(
             ann if ann in (int, float, bool, str) else str
         )
-        props[name] = {"type": json_type}  # 参数属性
+        props[name] = {
+            "type": json_type,
+            "description": param_descs.get(name, "")
+        }
 
         if p.default is inspect._empty:
-            # 没有默认值的参数视为必填
             required.append(name)
 
-    doc = inspect.getdoc(fn) or ""  # 函数的 docstring
-    fn_name = getattr(fn, "__name__", fn.__class__.__name__)  # 函数名
+    fn_name = getattr(fn, "__name__", fn.__class__.__name__)
 
     return {
         "type": "function",

@@ -14,9 +14,6 @@ import os
 
 
 # TODO: agent tool include and exclude
-# =============================================================================
-# Agent Type Registry - The core of subagent mechanism
-# =============================================================================
 
 AGENT_TYPES = {
     # Explore: Read-only agent for searching and analyzing

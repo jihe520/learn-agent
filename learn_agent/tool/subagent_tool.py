@@ -1,6 +1,5 @@
 from learn_agent.tool.toolkit import Toolkit
 from pydantic import BaseModel
-from learn_agent.agent.claude_code_agent import ClaudeCodeAgent
 from learn_agent.memory import Memory
 from learn_agent.llm import DeepSeek
 import time
@@ -65,6 +64,8 @@ class SubAgentTool(Toolkit):
 
         config = self.agent_type[agent_type]
         # TODO: filter tools
+        from learn_agent.agent.claude_code_agent import ClaudeCodeAgent
+
         sub_system_prompt = f"""you are a {agent_type} subagent. at {self.work_dir}
             {config["system_prompt"]}
         """
