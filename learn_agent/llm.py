@@ -43,10 +43,8 @@ class LLM:
         if tools:
             kwargs["tools"] = tools
             # kwargs["tool_choice"] = "auto"  # 一般默认就是 auto，可显式打开
-        print("LLM chat with params:\n", kwargs)
         # 发起一次非流式对话请求，非流式更适合学习和调试
         response = self.client.chat.completions.create(**kwargs)
-        print("LLM response:\n", response)
         msg = response.choices[0].message
         return msg
 
@@ -108,11 +106,13 @@ class LLM:
                         tool_calls_buffer[tc_index]["type"] = tc.type
 
                     if tc.function and tc.function.name:
-                        tool_calls_buffer[tc_index]["function"]["name"] = tc.function.name
+                        tool_calls_buffer[tc_index]["function"]["name"] = (
+                            tc.function.name
+                        )
                     if tc.function and tc.function.arguments:
-                        tool_calls_buffer[tc_index]["function"][
-                            "arguments"
-                        ] += tc.function.arguments
+                        tool_calls_buffer[tc_index]["function"]["arguments"] += (
+                            tc.function.arguments
+                        )
 
         # 流结束，输出完整工具调用信息
         if tool_calls_buffer:

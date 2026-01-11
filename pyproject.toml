@@ -8,6 +8,7 @@ dependencies = [
     "anthropic>=0.75.0",
     "fastapi>=0.128.0",
     "icecream>=2.1.8",
+    "mem0ai>=1.0.1",
     "openai>=1.0.0",
     "pytest>=9.0.2",
     "python-dotenv>=1.2.1",
