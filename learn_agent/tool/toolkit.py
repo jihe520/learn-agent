@@ -175,6 +175,7 @@ class Toolkit:
         return tool_name in self._tools
 
     def call(self, tool_name: str, **kwargs) -> Any:
+        print(f"Calling tool {tool_name} with args {kwargs}")
         # 调用具体的工具函数
         if not self.has(tool_name):
             raise ValueError(f"Tool {tool_name} not found in toolkit {self.name}")

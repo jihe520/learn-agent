@@ -87,7 +87,7 @@ class Agent:
                 try:
                     # 执行本地工具函数
                     result = self._dispatch_tool(fn_name, args)
-                    # 工具结果以更“模型友好”的结构回填
+                    # 工具结果以更"模型友好"的结构回填
                     tool_content = json.dumps(
                         {"ok": True, "result": result}, ensure_ascii=False
                     )
